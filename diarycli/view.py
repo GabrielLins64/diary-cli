@@ -1,22 +1,13 @@
 import abc
 from abc import ABC, abstractmethod
-import typing
 
 
 class View(ABC):
     def __init__(self):
-        self.__id: int = None
-        self.__name: str = None
-        self.__parent_id: int = None
-        self.children: list[int] = []
-
-    @property
-    def id(self):
-        return self.__id
-
-    @id.setter
-    def id(self, value: int):
-        self.__id = value
+        self.__name: None
+        self.__parent: View = None
+        self.__shortcut: str = None
+        self.children: list[type[View]] = []
 
     @property
     def name(self):
@@ -27,13 +18,25 @@ class View(ABC):
         self.__name = value
 
     @property
+    def shortcut(self):
+        return self.__shortcut
+
+    @shortcut.setter
+    def shortcut(self, value: str):
+        self.__shortcut = value
+
+    @property
     def parent(self):
-        return self.__parent_id
+        return self.__parent
 
     @parent.setter
     def parent(self, value):
-        self.__parent_id = value
+        self.__parent = value
 
     @abstractmethod
     def render(self):
+        pass
+
+    @abstractmethod
+    def handle_events(self):
         pass
