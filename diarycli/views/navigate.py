@@ -6,9 +6,12 @@ class Navigate(View):
     def __init__(self):
         super().__init__()
         self.name = 'Navegar'
+        self.shortcut = 'n'
         self.children = []
-        self.options = [child.name for child in self.children]
-        self.options.append("Voltar")
+
+        self.shortcuts = [ord(child.shortcut) for child in self.children if child.shortcut is not None]
+        self.options = [f"{child.name} ({child.shortcut.upper()})" if child.shortcut is not None else child.name for child in self.children]
+        self.options.append("Voltar (b)")
         self.options_length = len(self.options)
         self.selected_option = 0
 
@@ -30,8 +33,20 @@ class Navigate(View):
 
         if key == curses.KEY_UP:
             self.selected_option = (self.selected_option - 1) % self.options_length
+
         elif key == curses.KEY_DOWN:
             self.selected_option = (self.selected_option + 1) % self.options_length
 
-        if key == ord('\n'):
+        elif key == ord('\n'):
             self.choose_option(interface)
+
+        elif key == ord('b'):
+            self.selected_option = self.options_length - 1
+            self.choose_option(interface)
+
+        elif key in self.shortcuts:
+            for idx, child in enumerate(self.children):
+                if child.shortcut is not None and ord(child.shortcut) == key:
+                    self.selected_option = idx
+                    self.choose_option(interface)
+                    break
