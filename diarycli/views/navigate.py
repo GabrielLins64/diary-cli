@@ -11,7 +11,7 @@ class Navigate(View):
 
         self.shortcuts = [ord(child.shortcut) for child in self.children if child.shortcut is not None]
         self.options = [f"{child.name} ({child.shortcut.upper()})" if child.shortcut is not None else child.name for child in self.children]
-        self.options.append("Voltar (b)")
+        self.options.append("Voltar (B)")
         self.options_length = len(self.options)
         self.selected_option = 0
 
