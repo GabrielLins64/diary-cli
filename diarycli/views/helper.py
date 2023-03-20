@@ -1,4 +1,5 @@
 from diarycli.view import View
+from diarycli.constants import TEXT_HELP_PTBR
 import curses
 
 
@@ -8,45 +9,47 @@ class Help(View):
         self.name = 'Ajuda'
         self.shortcut = 'h'
         self.children = []
+        self.current_row = 0
+        self.max_y, self.max_x = 0, 0
+        self.pad = None
+        self.num_of_lines = 0
 
-        self.shortcuts = [ord(child.shortcut) for child in self.children if child.shortcut is not None]
-        self.options = [f"{child.name} ({child.shortcut.upper()})" if child.shortcut is not None else child.name for child in self.children]
-        self.options.append("Voltar (b)")
-        self.options_length = len(self.options)
-        self.selected_option = 0
+    def create_pad(self):
+        self.num_of_lines = len(TEXT_HELP_PTBR) // (self.max_x - 4)
+        self.num_of_lines += TEXT_HELP_PTBR.count('\n')
 
-    def choose_option(self, interface):
-        if (self.selected_option == self.options_length - 1):
-            interface.go_back()
+        self.pad = curses.newpad(self.num_of_lines, self.max_x - 4)
+        self.pad.scrollok(True)
+        self.pad.addstr(0, 0, TEXT_HELP_PTBR)
+        self.pad.refresh(self.current_row, 0, 4, 2, self.max_y - 2, self.max_x - 2)
 
     def render(self, interface):
-        interface.stdscr.addstr(0, 1, self.name)
+        new_max_y, new_max_x = interface.stdscr.getmaxyx()
 
-        for i in range(self.options_length):
-            if i == self.selected_option:
-                interface.stdscr.addstr(i+2, 1, f"> {self.options[i]}")
-            else:
-                interface.stdscr.addstr(i+2, 1, f"  {self.options[i]}")
+        if new_max_x != self.max_x or new_max_y != self.max_y:
+            self.max_x, self.max_y = new_max_x, new_max_y
+
+            interface.stdscr.clear()
+            interface.stdscr.addstr(0, 1, self.name)
+            interface.stdscr.addstr(2, 2, "Pressione (B) para voltar...")
+            interface.stdscr.refresh()
+
+            self.create_pad()
 
     def handle_events(self, interface):
         key = interface.stdscr.getch()
 
         if key == curses.KEY_UP:
-            self.selected_option = (self.selected_option - 1) % self.options_length
+            if (self.current_row > 0):
+                self.current_row -= 1
+                self.pad.refresh(self.current_row, 0, 4, 2, self.max_y - 2, self.max_x - 2)
 
         elif key == curses.KEY_DOWN:
-            self.selected_option = (self.selected_option + 1) % self.options_length
-
-        elif key == ord('\n'):
-            self.choose_option(interface)
+            if self.current_row < self.num_of_lines - 5:
+                self.current_row += 1
+                self.pad.refresh(self.current_row, 0, 4, 2, self.max_y - 2, self.max_x - 2)
 
         elif key == ord('b'):
-            self.selected_option = self.options_length - 1
-            self.choose_option(interface)
-
-        elif key in self.shortcuts:
-            for idx, child in enumerate(self.children):
-                if child.shortcut is not None and ord(child.shortcut) == key:
-                    self.selected_option = idx
-                    self.choose_option(interface)
-                    break
+            self.max_y, self.max_x = 0, 0
+            interface.stdscr.clear()
+            interface.go_back()
