@@ -10,7 +10,6 @@ class View(ABC):
     def __init__(self):
         self.__name: None
         self.__parent: View = None
-        self.__shortcut: str = None
         self.children: list[type[View]] = []
 
     @property
@@ -22,16 +21,6 @@ class View(ABC):
     def name(self, value: str):
         """Name setter"""
         self.__name = value
-
-    @property
-    def shortcut(self):
-        """Shortcut getter"""
-        return self.__shortcut
-
-    @shortcut.setter
-    def shortcut(self, value: str):
-        """Shortcut setter"""
-        self.__shortcut = value
 
     @property
     def parent(self):

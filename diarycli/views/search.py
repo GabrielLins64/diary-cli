@@ -12,12 +12,10 @@ class Search(View):
     def __init__(self):
         super().__init__()
         self.name = 'Buscar'
-        self.shortcut = 's'
         self.children = []
 
-        self.shortcuts = [ord(child.shortcut) for child in self.children if child.shortcut is not None]
-        self.options = [f"{child.name} ({child.shortcut.upper()})" if child.shortcut is not None else child.name for child in self.children]
-        self.options.append("Voltar (B)")
+        self.options = [child.name for child in self.children]
+        self.options.append("Voltar")
         self.options_length = len(self.options)
         self.selected_option = 0
 
@@ -30,9 +28,9 @@ class Search(View):
 
         for i in range(self.options_length):
             if i == self.selected_option:
-                interface.stdscr.addstr(i+2, 1, f"> {self.options[i]}")
+                interface.stdscr.addstr(i+2, 1, f"> {i+1}. {self.options[i]}")
             else:
-                interface.stdscr.addstr(i+2, 1, f"  {self.options[i]}")
+                interface.stdscr.addstr(i+2, 1, f"  {i+1}. {self.options[i]}")
 
     def handle_events(self, interface):
         key = interface.stdscr.getch()
@@ -50,9 +48,7 @@ class Search(View):
             self.selected_option = self.options_length - 1
             self.choose_option(interface)
 
-        elif key in self.shortcuts:
-            for idx, child in enumerate(self.children):
-                if child.shortcut is not None and ord(child.shortcut) == key:
-                    self.selected_option = idx
-                    self.choose_option(interface)
-                    break
+        elif 48 <= key <= 57:
+            if int(chr(key)) in range(1, self.options_length + 1):
+                self.selected_option = int(chr(key)) - 1
+                self.choose_option(interface)

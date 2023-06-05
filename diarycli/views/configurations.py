@@ -17,17 +17,16 @@ class Configurations(View):
     def __init__(self):
         super().__init__()
         self.name = 'Configurações'
-        self.shortcut = 'c'
         self.children = []
         self.configs = {}
         self.load_configs()
 
-        self.shortcuts = [ord(child.shortcut) for child in self.children if child.shortcut is not None]
-        self.options = [f'{child.name} ({child.shortcut.upper()})' if child.shortcut is not None else child.name for child in self.children]
+        self.options = [child.name for child in self.children]
         self.options.append('Armazenamento')
         self.options.append('Editor padrão')
         self.options.append('Script de sincronização')
-        self.options.append('Voltar (B)')
+        self.options.append('Restaurar configurações padrões')
+        self.options.append('Voltar')
         self.options_length = len(self.options)
         self.selected_option = 0
 
@@ -39,6 +38,18 @@ class Configurations(View):
 
     def update_configs(self, config_code: str, config_value: str):
         self.configs[config_code] = config_value
+
+        with open(CONFIGS_PATH, 'w') as f:
+            f.write(json.dumps(self.configs, indent=4))
+
+        self.load_configs()
+
+    def restore_default(self):
+        self.configs = {
+            "editor": "vi",
+            "syncScript": "./scripts/sync_github.sh",
+            "storage": "./data/"
+        }
 
         with open(CONFIGS_PATH, 'w') as f:
             f.write(json.dumps(self.configs, indent=4))
@@ -68,14 +79,17 @@ class Configurations(View):
         interface.stdscr.refresh()
 
     def choose_option(self, interface):
-        if (self.selected_option == self.options_length - 4):
+        if (self.selected_option == 0):
             self.update_config_view(interface, "Armazenamento", "storage")
 
-        if (self.selected_option == self.options_length - 3):
+        if (self.selected_option == 1):
             self.update_config_view(interface, "Editor padrão", "editor")
 
-        if (self.selected_option == self.options_length - 2):
+        if (self.selected_option == 2):
             self.update_config_view(interface, "Script de sincronização", "syncScript")
+
+        if (self.selected_option == 3):
+            self.restore_default()
         
         if (self.selected_option == self.options_length - 1):
             interface.go_back()
@@ -85,9 +99,9 @@ class Configurations(View):
 
         for i in range(self.options_length):
             if i == self.selected_option:
-                interface.stdscr.addstr(i + 2, 1, f"> {self.options[i]}")
+                interface.stdscr.addstr(i + 2, 1, f"> {i+1}. {self.options[i]}")
             else:
-                interface.stdscr.addstr(i + 2, 1, f"  {self.options[i]}")
+                interface.stdscr.addstr(i + 2, 1, f"  {i+1}. {self.options[i]}")
 
     def handle_events(self, interface):
         key = interface.stdscr.getch()
@@ -101,13 +115,7 @@ class Configurations(View):
         elif key == ord('\n'):
             self.choose_option(interface)
 
-        elif key == ord('b'):
-            self.selected_option = self.options_length - 1
-            self.choose_option(interface)
-
-        elif key in self.shortcuts:
-            for idx, child in enumerate(self.children):
-                if child.shortcut is not None and ord(child.shortcut) == key:
-                    self.selected_option = idx
-                    self.choose_option(interface)
-                    break
+        elif 48 <= key <= 57:
+            if int(chr(key)) in range(1, self.options_length + 1):
+                self.selected_option = int(chr(key)) - 1
+                self.choose_option(interface)

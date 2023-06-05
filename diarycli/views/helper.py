@@ -12,7 +12,6 @@ class Help(View):
     def __init__(self):
         super().__init__()
         self.name = 'Ajuda'
-        self.shortcut = 'h'
         self.children = []
         self.current_row = 0
         self.max_y, self.max_x = 0, 0
@@ -36,7 +35,7 @@ class Help(View):
 
             interface.stdscr.clear()
             interface.stdscr.addstr(0, 1, self.name)
-            interface.stdscr.addstr(2, 2, "Pressione (B) para voltar...")
+            interface.stdscr.addstr(2, 2, "Pressione (Q) para voltar...")
             interface.stdscr.refresh()
 
             self.create_pad()
@@ -54,7 +53,7 @@ class Help(View):
                 self.current_row += 1
                 self.pad.refresh(self.current_row, 0, 4, 2, self.max_y - 2, self.max_x - 2)
 
-        elif key == ord('b'):
+        elif key == ord('q'):
             self.max_y, self.max_x = 0, 0
             interface.stdscr.clear()
             interface.go_back()
