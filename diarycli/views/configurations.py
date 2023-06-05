@@ -3,6 +3,13 @@ import curses
 
 
 class Configurations(View):
+    """Configuration view
+
+    Let user to configure the application details as the
+    default tracked directory, deploy script and default
+    text editor.
+    """
+
     def __init__(self):
         super().__init__()
         self.name = 'Configurações'

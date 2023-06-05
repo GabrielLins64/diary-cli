@@ -4,6 +4,12 @@ import curses
 
 
 class Menu(View):
+    """Menu main view
+
+    The first view available to user. Its only goal is to
+    let user navigate through all main options.
+    """
+
     def __init__(self):
         super().__init__()
         self.name = 'Menu principal'

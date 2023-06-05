@@ -3,6 +3,12 @@ import curses
 
 
 class Search(View):
+    """Search view
+
+    Allow user to find folder and files that are tracked
+    by the application.
+    """
+
     def __init__(self):
         super().__init__()
         self.name = 'Buscar'

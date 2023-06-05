@@ -3,6 +3,12 @@ import curses
 
 
 class Navigate(View):
+    """Navigation view
+
+    Allow user to navigate between directories and files
+    tracked by the application.
+    """
+
     def __init__(self):
         super().__init__()
         self.name = 'Navegar'
