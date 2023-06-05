@@ -27,6 +27,8 @@ class Interface:
         else:
             self.current_view = self.parent_view
             self.parent_view = self.current_view.parent
+            self.stdscr.clear()
+            self.stdscr.refresh()
 
     def main_loop(self, stdscr):
         """Application main loop.
