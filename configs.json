@@ -1,0 +1,5 @@
+{
+    "editor": "vi",
+    "syncScript": "./scripts/sync_github.sh",
+    "storage": "./data/"
+}

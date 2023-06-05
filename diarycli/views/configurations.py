@@ -1,5 +1,9 @@
 from diarycli.view import View
+import json
 import curses
+
+
+CONFIGS_PATH = "configs.json"
 
 
 class Configurations(View):
@@ -15,14 +19,64 @@ class Configurations(View):
         self.name = 'Configurações'
         self.shortcut = 'c'
         self.children = []
+        self.configs = {}
+        self.load_configs()
 
         self.shortcuts = [ord(child.shortcut) for child in self.children if child.shortcut is not None]
-        self.options = [f"{child.name} ({child.shortcut.upper()})" if child.shortcut is not None else child.name for child in self.children]
-        self.options.append("Voltar (B)")
+        self.options = [f'{child.name} ({child.shortcut.upper()})' if child.shortcut is not None else child.name for child in self.children]
+        self.options.append('Armazenamento')
+        self.options.append('Editor padrão')
+        self.options.append('Script de sincronização')
+        self.options.append('Voltar (B)')
         self.options_length = len(self.options)
         self.selected_option = 0
 
+    def load_configs(self):
+        with open(CONFIGS_PATH) as f:
+            data = json.load(f)
+
+        self.configs = data
+
+    def update_configs(self, config_code: str, config_value: str):
+        self.configs[config_code] = config_value
+
+        with open(CONFIGS_PATH, 'w') as f:
+            f.write(json.dumps(self.configs, indent=4))
+
+        self.load_configs()
+
+    def update_config_view(self, interface, config_name: str, config_code: str):
+        curses.echo()
+        pad = curses.newpad(7, 100)
+
+        pad.addstr(0, 1, config_name)
+        pad.addstr(2, 1, f"Atual: {self.configs[config_code]}")
+        pad.addstr(3, 1, f"Novo: ")
+        pad.addstr(5, 1, f"Digite o novo valor da configuração ou deixe em branco para manter o valor atual.")
+
+        pad.refresh(0, 0, 0, 0, curses.LINES - 1, curses.COLS - 1)
+
+        interface.stdscr.move(3, 7)
+
+        new_value = interface.stdscr.getstr().decode('utf-8')
+
+        if (new_value != ''):
+            self.update_configs(config_code, new_value)
+
+        curses.noecho()
+        interface.stdscr.clear()
+        interface.stdscr.refresh()
+
     def choose_option(self, interface):
+        if (self.selected_option == self.options_length - 4):
+            self.update_config_view(interface, "Armazenamento", "storage")
+
+        if (self.selected_option == self.options_length - 3):
+            self.update_config_view(interface, "Editor padrão", "editor")
+
+        if (self.selected_option == self.options_length - 2):
+            self.update_config_view(interface, "Script de sincronização", "syncScript")
+        
         if (self.selected_option == self.options_length - 1):
             interface.go_back()
 
@@ -31,9 +85,9 @@ class Configurations(View):
 
         for i in range(self.options_length):
             if i == self.selected_option:
-                interface.stdscr.addstr(i+2, 1, f"> {self.options[i]}")
+                interface.stdscr.addstr(i + 2, 1, f"> {self.options[i]}")
             else:
-                interface.stdscr.addstr(i+2, 1, f"  {self.options[i]}")
+                interface.stdscr.addstr(i + 2, 1, f"  {self.options[i]}")
 
     def handle_events(self, interface):
         key = interface.stdscr.getch()
