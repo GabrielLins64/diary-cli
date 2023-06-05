@@ -50,7 +50,7 @@ class Help(View):
                 self.pad.refresh(self.current_row, 0, 4, 2, self.max_y - 2, self.max_x - 2)
 
         elif key == curses.KEY_DOWN:
-            if (self.current_row < self.num_of_lines - 5):
+            if (self.current_row < self.num_of_lines - 7):
                 self.current_row += 1
                 self.pad.refresh(self.current_row, 0, 4, 2, self.max_y - 2, self.max_x - 2)
 
