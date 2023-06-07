@@ -50,7 +50,7 @@ class Navigate(View):
         if os.path.exists(self.current_path):
             self.scan_directory(interface)
         else:
-            interface.stdscr.addstr(4, 1, f"O diretório {self.current_path} está inacessível.")
+            interface.stdscr.addstr(4, 1, f"O diretório {self.current_path} está inacessível ou não existe.")
 
     def scan_directory(self, interface):
         self.options = []
@@ -120,7 +120,12 @@ class Navigate(View):
     def handle_events(self, interface):
         key = interface.stdscr.getch()
 
-        if key == curses.KEY_UP:
+        if key == ord('q') or not self.options:
+            self.current_path = self.initial_path
+            interface.stdscr.clear()
+            interface.go_back()
+
+        elif key == curses.KEY_UP:
             self.selected_option = (self.selected_option - 1) % self.options_length
             self.adjust_viewport(interface)
 
@@ -135,8 +140,3 @@ class Navigate(View):
             if int(chr(key)) in range(1, self.options_length + 1):
                 self.selected_option = int(chr(key)) - 1
                 self.choose_option(interface)
-
-        elif key == ord('q'):
-            self.current_path = self.initial_path
-            interface.stdscr.clear()
-            interface.go_back()
