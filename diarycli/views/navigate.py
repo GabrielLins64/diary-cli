@@ -2,9 +2,7 @@ import os
 import json
 from diarycli.view import View
 import curses
-
-
-CONFIGS_PATH = "configs.json"
+from diarycli.configs import load_configs
 
 
 class Navigate(View):
@@ -42,10 +40,9 @@ class Navigate(View):
 
     def load_path(self, interface):
         if not self.initial_path:
-            with open(CONFIGS_PATH) as f:
-                configs = json.load(f)
-                self.initial_path = configs['storage']
-                self.current_path = configs['storage']
+            configs = load_configs()
+            self.initial_path = os.path.expanduser(configs['storage'])
+            self.current_path = os.path.expanduser(configs['storage'])
 
         if os.path.exists(self.current_path):
             self.scan_directory(interface)

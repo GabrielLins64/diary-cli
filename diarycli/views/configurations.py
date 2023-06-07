@@ -1,9 +1,6 @@
 from diarycli.view import View
-import json
 import curses
-
-
-CONFIGS_PATH = "configs.json"
+from diarycli import configs
 
 
 class Configurations(View):
@@ -31,30 +28,7 @@ class Configurations(View):
         self.selected_option = 0
 
     def load_configs(self):
-        with open(CONFIGS_PATH) as f:
-            data = json.load(f)
-
-        self.configs = data
-
-    def update_configs(self, config_code: str, config_value: str):
-        self.configs[config_code] = config_value
-
-        with open(CONFIGS_PATH, 'w') as f:
-            f.write(json.dumps(self.configs, indent=4))
-
-        self.load_configs()
-
-    def restore_default(self):
-        self.configs = {
-            "editor": "vi",
-            "syncScript": "./scripts/sync_github.sh",
-            "storage": "./data/"
-        }
-
-        with open(CONFIGS_PATH, 'w') as f:
-            f.write(json.dumps(self.configs, indent=4))
-
-        self.load_configs()
+        self.configs = configs.load_configs()
 
     def update_config_view(self, interface, config_name: str, config_code: str):
         curses.echo()
@@ -72,7 +46,7 @@ class Configurations(View):
         new_value = interface.stdscr.getstr().decode('utf-8')
 
         if (new_value != ''):
-            self.update_configs(config_code, new_value)
+            self.configs = configs.update_configs({config_code: new_value})
 
         curses.noecho()
         interface.stdscr.clear()
@@ -89,7 +63,7 @@ class Configurations(View):
             self.update_config_view(interface, "Script de sincronização", "syncScript")
 
         if (self.selected_option == 3):
-            self.restore_default()
+            self.configs = configs.restore_default()
         
         if (self.selected_option == self.options_length - 1):
             interface.go_back()
