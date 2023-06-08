@@ -1,6 +1,6 @@
 import os
-import json
 from diarycli.view import View
+from diarycli.views.create import Create, CreateMode
 import curses
 from diarycli.configs import load_configs
 
@@ -15,6 +15,8 @@ class Navigate(View):
     def __init__(self):
         super().__init__()
         self.name = 'Navegar'
+        self.create_view = Create()
+        self.create_view.parent = self
 
         self.initial_path = False
         self.current_path = False
@@ -25,18 +27,25 @@ class Navigate(View):
         self.options_length = len(self.options)
         self.selected_option = 0
         self.viewport_position = 0
+        self.header = [
+            self.name,
+            'Pressione (Q) para sair da navegação.',
+            'Pressione (D) para criar um diretório no caminho atual.',
+            'Pressione (F) para criar um arquivo no caminho atual.',
+        ]
+        self.header_size = len(self.header) + 1
 
     def adjust_viewport(self, interface):
         height = interface.stdscr.getmaxyx()[0]
         if self.selected_option < self.viewport_position:
             self.viewport_position = self.selected_option
-        elif self.selected_option >= self.viewport_position + height - 4:
-            self.viewport_position = self.selected_option - height + 5
+        elif self.selected_option >= self.viewport_position + height - self.header_size:
+            self.viewport_position = self.selected_option - height + self.header_size + 1
 
         if self.viewport_position < 0:
             self.viewport_position = 0
-        elif self.viewport_position > self.options_length - height + 4:
-            self.viewport_position = max(0, self.options_length - height + 4)
+        elif self.viewport_position > self.options_length - height + self.header_size:
+            self.viewport_position = max(0, self.options_length - height + self.header_size)
 
     def load_path(self, interface):
         if not self.initial_path:
@@ -47,7 +56,7 @@ class Navigate(View):
         if os.path.exists(self.current_path):
             self.scan_directory(interface)
         else:
-            interface.stdscr.addstr(4, 1, f"O diretório {self.current_path} está inacessível ou não existe.")
+            interface.stdscr.addstr(self.header_size, 1, f"O diretório {self.current_path} está inacessível ou não existe.")
 
     def scan_directory(self, interface):
         self.options = []
@@ -67,10 +76,16 @@ class Navigate(View):
     def previous_directory(self):
         self.current_path = self.current_path[:self.current_path.rstrip('/').rindex('/') + 1]
 
+    def reset_configs(self):
+        self.initial_path = False
+        self.current_path = False
+        self.options = []
+
     def go_back(self, interface):
         interface.stdscr.clear()
 
         if (self.current_path == self.initial_path):
+            self.reset_configs()
             interface.go_back()
         else:
             self.previous_directory()
@@ -94,33 +109,56 @@ class Navigate(View):
                 else:
                     self.open_file(self.current_path + option)
 
+    def print_header(self, interface):
+        for idx, str_ in enumerate(self.header):
+            interface.stdscr.addstr(idx, 1, str_)
+
     def render(self, interface):
         self.load_path(interface)
-
-        interface.stdscr.addstr(0, 1, self.name)
-        interface.stdscr.addstr(1, 1, f'Diretório atual: "{self.current_path}"')
-        interface.stdscr.addstr(2, 1, 'Pressione (Q) para sair da navegação.')
+        self.print_header(interface)
 
         height, width = interface.stdscr.getmaxyx()
-        visible_options = self.options[self.viewport_position:self.viewport_position+height-4]
+        visible_options = self.options[self.viewport_position:self.viewport_position+height-self.header_size]
 
         for i, option in enumerate(visible_options):
             option_index = self.viewport_position + i + 1
 
             if i == self.selected_option - self.viewport_position:
-                interface.stdscr.addstr(i+4, 1, f"> {option_index}. {option}")
+                interface.stdscr.addstr(i+self.header_size, 1, f"> {option_index}. {option}")
             else:
-                interface.stdscr.addstr(i+4, 1, f"  {option_index}. {option}")
+                interface.stdscr.addstr(i+self.header_size, 1, f"  {option_index}. {option}")
 
-        interface.stdscr.refresh()
+        # interface.stdscr.refresh()
+
+    def create_directory(self, interface):
+        self.create_view.update_mode(CreateMode.DIRECTORY)
+        self.create_view.set_path(self.current_path)
+
+        interface.stdscr.clear()
+        interface.parent_view = self
+        interface.current_view = self.create_view
+
+    def create_file(self, interface):
+        self.create_view.update_mode(CreateMode.FILE)
+        self.create_view.set_path(self.current_path)
+
+        interface.stdscr.clear()
+        interface.parent_view = self
+        interface.current_view = self.create_view
 
     def handle_events(self, interface):
         key = interface.stdscr.getch()
 
         if key == ord('q') or not self.options:
-            self.current_path = self.initial_path
+            self.reset_configs()
             interface.stdscr.clear()
             interface.go_back()
+
+        elif key == ord('d'):
+            self.create_directory(interface)
+
+        elif key == ord('f'):
+            self.create_file(interface)
 
         elif key == curses.KEY_UP:
             self.selected_option = (self.selected_option - 1) % self.options_length
