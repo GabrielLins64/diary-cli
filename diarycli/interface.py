@@ -15,7 +15,6 @@ class Interface:
         as the Menu() view."""
 
         self.current_view: View = Menu()
-        self.parent_view: View = None
         self.stdscr = None
 
     def go_back(self):
@@ -26,7 +25,6 @@ class Interface:
             exit(0)
         else:
             self.current_view = self.current_view.parent
-            self.parent_view = self.current_view.parent
             self.stdscr.clear()
             self.stdscr.refresh()
 

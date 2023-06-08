@@ -128,14 +128,11 @@ class Navigate(View):
             else:
                 interface.stdscr.addstr(i+self.header_size, 1, f"  {option_index}. {option}")
 
-        # interface.stdscr.refresh()
-
     def create_directory(self, interface):
         self.create_view.update_mode(CreateMode.DIRECTORY)
         self.create_view.set_path(self.current_path)
 
         interface.stdscr.clear()
-        interface.parent_view = self
         interface.current_view = self.create_view
 
     def create_file(self, interface):
@@ -143,7 +140,6 @@ class Navigate(View):
         self.create_view.set_path(self.current_path)
 
         interface.stdscr.clear()
-        interface.parent_view = self
         interface.current_view = self.create_view
 
     def handle_events(self, interface):

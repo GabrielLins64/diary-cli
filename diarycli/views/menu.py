@@ -34,7 +34,6 @@ class Menu(View):
         if (self.selected_option == self.options_length - 1):
             interface.go_back()
         else:
-            interface.parent_view = self
             interface.current_view = self.children[self.selected_option]
 
     def render(self, interface):
