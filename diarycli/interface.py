@@ -22,10 +22,10 @@ class Interface:
         """Returns to the parent view. If there is no parent view,
         the application is terminated with return code 0."""
 
-        if (not self.parent_view):
+        if not self.current_view.parent:
             exit(0)
         else:
-            self.current_view = self.parent_view
+            self.current_view = self.current_view.parent
             self.parent_view = self.current_view.parent
             self.stdscr.clear()
             self.stdscr.refresh()

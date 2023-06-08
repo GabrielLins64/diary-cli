@@ -20,6 +20,9 @@ class Menu(View):
             helper.Help(),
         ]
 
+        for child in self.children:
+            child.parent = self
+
         self.options = [child.name for child in self.children]
         self.options.append("Sair")
         self.options_length = len(self.options)
