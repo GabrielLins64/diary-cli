@@ -1,3 +1,4 @@
+import subprocess
 import os
 from diarycli.view import View
 from diarycli.views.create import Create, CreateMode
@@ -20,6 +21,7 @@ class Navigate(View):
 
         self.initial_path = False
         self.current_path = False
+        self.editor = False
         self.directories = []
         self.files = []
 
@@ -52,6 +54,7 @@ class Navigate(View):
             configs = load_configs()
             self.initial_path = os.path.expanduser(configs['storage'])
             self.current_path = os.path.expanduser(configs['storage'])
+            self.editor = configs['editor']
 
         if os.path.exists(self.current_path):
             self.scan_directory(interface)
@@ -90,8 +93,18 @@ class Navigate(View):
         else:
             self.previous_directory()
 
-    def open_file(self, path):
-        pass
+    def open_file(self, path, interface):
+        try:
+            if not self.editor:
+                raise FileNotFoundError
+
+            curses.endwin()
+            subprocess.run([self.editor, path])
+            curses.doupdate()
+        except FileNotFoundError:
+            interface.stdscr.clear()
+            interface.stdscr.addstr(1, 1, f'Erro: o editor "{self.editor}" não está disponível.')
+            interface.stdscr.getch()
 
     def choose_option(self, interface):
         if (self.selected_option in range(len(self.options))):
@@ -107,7 +120,7 @@ class Navigate(View):
                     self.viewport_position = 0
                     self.current_path += option
                 else:
-                    self.open_file(self.current_path + option)
+                    self.open_file(self.current_path + option, interface)
 
     def print_header(self, interface):
         for idx, str_ in enumerate(self.header):
