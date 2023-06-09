@@ -39,29 +39,33 @@ class Navigate(View):
 
     def adjust_viewport(self, interface):
         height = interface.stdscr.getmaxyx()[0]
+
         if self.selected_option < self.viewport_position:
             self.viewport_position = self.selected_option
+            interface.stdscr.clear()
         elif self.selected_option >= self.viewport_position + height - self.header_size:
             self.viewport_position = self.selected_option - height + self.header_size + 1
+            interface.stdscr.clear()
 
         if self.viewport_position < 0:
             self.viewport_position = 0
+            interface.stdscr.clear()
         elif self.viewport_position > self.options_length - height + self.header_size:
             self.viewport_position = max(0, self.options_length - height + self.header_size)
+            interface.stdscr.clear()
 
     def load_path(self, interface):
-        if not self.initial_path:
-            configs = load_configs()
-            self.initial_path = os.path.expanduser(configs['storage'])
-            self.current_path = os.path.expanduser(configs['storage'])
-            self.editor = configs['editor']
+        configs = load_configs()
+        self.initial_path = os.path.expanduser(configs['storage'])
+        self.current_path = self.initial_path
+        self.editor = configs['editor']
 
         if os.path.exists(self.current_path):
-            self.scan_directory(interface)
+            self.scan_directory()
         else:
             interface.stdscr.addstr(self.header_size, 1, f"O diretório {self.current_path} está inacessível ou não existe.")
 
-    def scan_directory(self, interface):
+    def scan_directory(self):
         self.options = []
 
         for entry in os.scandir(self.current_path):
@@ -73,11 +77,9 @@ class Navigate(View):
         self.options.append('Voltar')
         self.options_length = len(self.options)
 
-        self.adjust_viewport(interface)
-        interface.stdscr.clear()
-
     def previous_directory(self):
         self.current_path = self.current_path[:self.current_path.rstrip('/').rindex('/') + 1]
+        self.scan_directory()
 
     def reset_configs(self):
         self.initial_path = False
@@ -106,6 +108,21 @@ class Navigate(View):
             interface.stdscr.addstr(1, 1, f'Erro: o editor "{self.editor}" não está disponível.')
             interface.stdscr.getch()
 
+    def create_directory(self, interface):
+        self.create_view.update_mode(CreateMode.DIRECTORY)
+        self.create_view.set_path(self.current_path)
+
+        self.scan_directory()
+        interface.stdscr.clear()
+        interface.current_view = self.create_view
+
+    def create_file(self, interface):
+        self.create_view.update_mode(CreateMode.FILE)
+        self.create_view.set_path(self.current_path)
+
+        interface.stdscr.clear()
+        interface.current_view = self.create_view
+
     def choose_option(self, interface):
         if (self.selected_option in range(len(self.options))):
             if self.selected_option == self.options_length - 1:
@@ -119,6 +136,8 @@ class Navigate(View):
                     self.selected_option = 0
                     self.viewport_position = 0
                     self.current_path += option
+                    self.scan_directory()
+                    interface.stdscr.clear()
                 else:
                     self.open_file(self.current_path + option, interface)
 
@@ -127,8 +146,10 @@ class Navigate(View):
             interface.stdscr.addstr(idx, 1, str_)
 
     def render(self, interface):
-        self.load_path(interface)
         self.print_header(interface)
+
+        if not self.current_path:
+            self.load_path(interface)
 
         height, width = interface.stdscr.getmaxyx()
         visible_options = self.options[self.viewport_position:self.viewport_position+height-self.header_size]
@@ -140,20 +161,6 @@ class Navigate(View):
                 interface.stdscr.addstr(i+self.header_size, 1, f"> {option_index}. {option}")
             else:
                 interface.stdscr.addstr(i+self.header_size, 1, f"  {option_index}. {option}")
-
-    def create_directory(self, interface):
-        self.create_view.update_mode(CreateMode.DIRECTORY)
-        self.create_view.set_path(self.current_path)
-
-        interface.stdscr.clear()
-        interface.current_view = self.create_view
-
-    def create_file(self, interface):
-        self.create_view.update_mode(CreateMode.FILE)
-        self.create_view.set_path(self.current_path)
-
-        interface.stdscr.clear()
-        interface.current_view = self.create_view
 
     def handle_events(self, interface):
         key = interface.stdscr.getch()
