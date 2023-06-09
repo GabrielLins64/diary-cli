@@ -89,5 +89,4 @@ class Create(View):
             curses.noecho()
             interface.stdscr.clear()
             interface.stdscr.refresh()
-            interface.stdscr.addstr(5, 1, f"GIH6.")
             interface.go_back()
