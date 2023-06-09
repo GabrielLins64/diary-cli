@@ -1,54 +1,166 @@
-from diarycli.view import View
+import os
 import curses
+from diarycli.view import View
+from diarycli.views.navigate import Navigate
+from diarycli.configs import load_configs
 
 
 class Search(View):
     """Search view
 
-    Allow user to find folder and files that are tracked
+    Allow user to find directories and files that are tracked
     by the application.
     """
 
     def __init__(self):
         super().__init__()
         self.name = 'Buscar'
-        self.children = []
+        self.navigate_view = Navigate()
+        self.navigate_view.parent = self
+        self.leave = False
 
-        self.options = [child.name for child in self.children]
-        self.options.append("Voltar")
+        self.path = False
+        self.editor = False
+        self.searching = False
+        self.search_string = ''
+
+        self.options = []
         self.options_length = len(self.options)
         self.selected_option = 0
+        self.viewport_position = 0
+
+    def adjust_viewport(self, interface):
+        height = interface.stdscr.getmaxyx()[0]
+
+        if self.selected_option < self.viewport_position:
+            self.viewport_position = self.selected_option
+            interface.stdscr.clear()
+        elif self.selected_option >= self.viewport_position + height - 3:
+            self.viewport_position = self.selected_option - height + 4
+            interface.stdscr.clear()
+
+        if self.viewport_position < 0:
+            self.viewport_position = 0
+            interface.stdscr.clear()
+        elif self.viewport_position > self.options_length - height + 3:
+            self.viewport_position = max(0, self.options_length - height + 3)
+            interface.stdscr.clear()
+
+
+    def search_files(self, search_string):
+        self.options = []
+        
+        if not self.path or not self.editor:
+            configs = load_configs()
+            self.path = os.path.expanduser(configs['storage'])
+            self.editor = os.path.expanduser(configs['editor'])
+
+        for root, dirs, files in os.walk(self.path):
+            for name in dirs:
+                if search_string.lower() in name.lower():
+                    self.options.append(os.path.join(root, name + '/'))
+            for name in files:
+                if search_string.lower() in name.lower():
+                    self.options.append(os.path.join(root, name))
+
+        self.options.append('Voltar')
+        self.options_length = len(self.options)
+
+    def return_to_search_view(self, interface):
+        self.searching = False
+        self.search_string = ''
+        self.options = []
+        self.options_length = 0
+        self.selected_option = 0
+        self.viewport_position = 0
+
+        interface.stdscr.clear()
+        interface.stdscr.refresh()
+
+    def go_back(self, interface):
+        self.return_to_search_view(interface)
+        interface.go_back()
 
     def choose_option(self, interface):
-        if (self.selected_option == self.options_length - 1):
-            interface.go_back()
+        if self.selected_option in range(len(self.options)):
+            if self.selected_option == self.options_length - 1:
+                self.return_to_search_view(interface)
+            else:
+                selected_path = self.options[self.selected_option]
+                if os.path.isdir(selected_path):
+                    self.navigate_view.update_path(selected_path)
+                    interface.stdscr.clear()
+                    interface.current_view = self.navigate_view
+                else:
+                    self.navigate_view.editor = self.editor
+                    self.navigate_view.open_file(selected_path, interface)
 
     def render(self, interface):
-        interface.stdscr.addstr(0, 1, self.name)
+        if (self.searching):
+            interface.stdscr.addstr(0, 1, f'{self.name}: {self.search_string}')
+            interface.stdscr.addstr(1, 1, 'Pressione (Q) para voltar à busca')
 
-        for i in range(self.options_length):
-            if i == self.selected_option:
-                interface.stdscr.addstr(i+2, 1, f"> {i+1}. {self.options[i]}")
+            height, width = interface.stdscr.getmaxyx()
+            visible_options = self.options[self.viewport_position:self.viewport_position + height - 3]
+
+            for i, option in enumerate(visible_options):
+                option_index = self.viewport_position + i + 1
+
+                if i == self.selected_option - self.viewport_position:
+                    interface.stdscr.addstr(i + 3, 1, f"> {option_index}. {option}")
+                else:
+                    interface.stdscr.addstr(i + 3, 1, f"  {option_index}. {option}")
+
+        else:
+            curses.echo()
+
+            interface.stdscr.addstr(0, 1, self.name)
+            interface.stdscr.addstr(1, 1, 'Deixe o campo "busca" em branco para voltar ao menu.')
+            interface.stdscr.addstr(3, 1, 'Busca: ')
+            interface.stdscr.move(3, 9)
+
+            new_value = interface.stdscr.getstr().decode('utf-8')
+
+            if (new_value != ''):
+                curses.noecho()
+                self.enter_search_mode = True
+                self.search_string = new_value
+                self.search_files(new_value)
             else:
-                interface.stdscr.addstr(i+2, 1, f"  {i+1}. {self.options[i]}")
+                self.leave = True
 
     def handle_events(self, interface):
-        key = interface.stdscr.getch()
+        if (self.leave):
+            self.leave = False
+            curses.noecho()
+            interface.stdscr.clear()
+            interface.stdscr.refresh()
+            interface.go_back()
 
-        if key == curses.KEY_UP:
-            self.selected_option = (self.selected_option - 1) % self.options_length
+        elif self.enter_search_mode:
+            self.enter_search_mode = False
+            self.searching = True
+            interface.stdscr.clear()
+            interface.stdscr.refresh()
 
-        elif key == curses.KEY_DOWN:
-            self.selected_option = (self.selected_option + 1) % self.options_length
+        elif self.searching:
+            key = interface.stdscr.getch()
 
-        elif key == ord('\n'):
-            self.choose_option(interface)
+            if key == ord('q') and self.searching:
+                self.return_to_search_view(interface)
 
-        elif key == ord('b'):
-            self.selected_option = self.options_length - 1
-            self.choose_option(interface)
+            elif key == curses.KEY_UP:
+                self.selected_option = (self.selected_option - 1) % self.options_length
+                self.adjust_viewport(interface)
 
-        elif 48 <= key <= 57:
-            if int(chr(key)) in range(1, self.options_length + 1):
-                self.selected_option = int(chr(key)) - 1
+            elif key == curses.KEY_DOWN:
+                self.selected_option = (self.selected_option + 1) % self.options_length
+                self.adjust_viewport(interface)
+
+            elif key == ord('\n'):
                 self.choose_option(interface)
+
+            elif 48 <= key <= 57:
+                if int(chr(key)) in range(1, self.options_length + 1):
+                    self.selected_option = int(chr(key)) - 1
+                    self.choose_option(interface)
