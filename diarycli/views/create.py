@@ -89,4 +89,5 @@ class Create(View):
             curses.noecho()
             interface.stdscr.clear()
             interface.stdscr.refresh()
+            self.parent.scan_directory()
             interface.go_back()
