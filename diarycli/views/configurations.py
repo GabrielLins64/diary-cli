@@ -21,7 +21,6 @@ class Configurations(View):
         self.options = [child.name for child in self.children]
         self.options.append('Armazenamento')
         self.options.append('Editor padrão')
-        self.options.append('Script de sincronização')
         self.options.append('Restaurar configurações padrões')
         self.options.append('Voltar')
         self.options_length = len(self.options)
@@ -30,19 +29,20 @@ class Configurations(View):
     def load_configs(self):
         self.configs = configs.load_configs()
 
-    def update_config_view(self, interface, config_name: str, config_code: str):
+    def update_config_view(self, interface, config_name: str, config_description: str, config_code: str):
         curses.echo()
-        pad = curses.newpad(7, 80)
+        pad = curses.newpad(8, 80)
 
         pad.addstr(0, 1, config_name)
-        pad.addstr(2, 1, f"Atual: {self.configs[config_code]}")
-        pad.addstr(3, 1, f"Novo: ")
-        pad.addstr(5, 1, f"Digite o novo valor da configuração ou deixe")
-        pad.addstr(6, 1, f"em branco para manter o valor atual.")
+        pad.addstr(1, 1, config_description)
+        pad.addstr(3, 1, f"Atual: {self.configs[config_code]}")
+        pad.addstr(4, 1, f"Novo: ")
+        pad.addstr(6, 1, f"Digite o novo valor da configuração ou deixe")
+        pad.addstr(7, 1, f"em branco para manter o valor atual.")
 
         pad.refresh(0, 0, 0, 0, curses.LINES - 1, curses.COLS - 1)
 
-        interface.stdscr.move(3, 7)
+        interface.stdscr.move(4, 7)
 
         new_value = interface.stdscr.getstr().decode('utf-8')
 
@@ -55,15 +55,18 @@ class Configurations(View):
 
     def choose_option(self, interface):
         if (self.selected_option == 0):
-            self.update_config_view(interface, "Armazenamento", "storage")
+            self.update_config_view(interface,
+                                    "Armazenamento",
+                                    "O caminho onde os arquivos e pastas são armazenados.",
+                                    "storage")
 
         if (self.selected_option == 1):
-            self.update_config_view(interface, "Editor padrão", "editor")
+            self.update_config_view(interface,
+                                    "Editor padrão",
+                                    "O editor de texto padrão utilizado.",
+                                    "editor")
 
         if (self.selected_option == 2):
-            self.update_config_view(interface, "Script de sincronização", "syncScript")
-
-        if (self.selected_option == 3):
             self.configs = configs.restore_default()
         
         if (self.selected_option == self.options_length - 1):
