@@ -32,12 +32,13 @@ class Configurations(View):
 
     def update_config_view(self, interface, config_name: str, config_code: str):
         curses.echo()
-        pad = curses.newpad(7, 100)
+        pad = curses.newpad(7, 80)
 
         pad.addstr(0, 1, config_name)
         pad.addstr(2, 1, f"Atual: {self.configs[config_code]}")
         pad.addstr(3, 1, f"Novo: ")
-        pad.addstr(5, 1, f"Digite o novo valor da configuração ou deixe em branco para manter o valor atual.")
+        pad.addstr(5, 1, f"Digite o novo valor da configuração ou deixe")
+        pad.addstr(6, 1, f"em branco para manter o valor atual.")
 
         pad.refresh(0, 0, 0, 0, curses.LINES - 1, curses.COLS - 1)
 

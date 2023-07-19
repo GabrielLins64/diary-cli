@@ -1,5 +1,0 @@
-{
-    "editor": "vi",
-    "syncScript": "~/.diarycli/scripts/sync_github.sh",
-    "storage": "~/.diarycli/data/"
-}
