@@ -1,5 +1,5 @@
 import json
-from os import path
+from os import path, mkdir
 
 
 DIARYCLI_PATH   = "$HOME/.diarycli"
@@ -32,6 +32,11 @@ def update_configs(update_values: dict) -> dict:
     return configs
 
 def restore_default() -> dict:
+    diarycli_path = path.expandvars(DIARYCLI_PATH)
+    if (not path.exists(diarycli_path)):
+        mkdir(diarycli_path)
+        mkdir(f'{diarycli_path}/data')
+
     configs_path = path.expandvars(CONFIGS_PATH)
 
     configs = {

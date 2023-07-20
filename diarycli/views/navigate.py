@@ -47,8 +47,8 @@ class Navigate(View):
         self.editor = configs['editor']
 
         if not os.path.exists(self.initial_path):
-            self.initial_path = False
             interface.stdscr.addstr(5, 1, f"O diretório base {self.initial_path} está inacessível ou não existe.")
+            self.initial_path = False
 
     def reset_configs(self):
         self.initial_path = False
@@ -153,6 +153,9 @@ class Navigate(View):
         interface.stdscr.clear()
 
     def check_selected_option_type(self):
+        if (not self.options_length):
+            return
+
         if (self.selected_option == self.options_length - 1):
             self.selected_option_type = OptionType.OTHER
         elif (self.options[self.selected_option].endswith('.enc')):
