@@ -2,9 +2,16 @@ import subprocess
 import os
 from diarycli.view import View
 from diarycli.views.create import Create, CreateMode
+from diarycli.views.cryptography import Cryptography, CryptographyMode
 import curses
 from diarycli.configs import load_configs
+from enum import Enum
 
+
+class OptionType(Enum):
+    ENC_FILE = 0
+    DEC_FILE = 1
+    OTHER = 2
 
 class Navigate(View):
     """Navigation view
@@ -16,8 +23,11 @@ class Navigate(View):
     def __init__(self):
         super().__init__()
         self.name = 'Navegar'
+
         self.create_view = Create()
         self.create_view.parent = self
+        self.cryptography_view = Cryptography()
+        self.cryptography_view.parent = self
 
         self.initial_path = False
         self.current_path = False
@@ -29,6 +39,8 @@ class Navigate(View):
         self.options_length = len(self.options)
         self.selected_option = 0
         self.viewport_position = 0
+        self.selected_option_type = OptionType.OTHER
+        self.screen_adjustment = 6
 
     def initialize_configs(self, interface):
         configs = load_configs()
@@ -37,7 +49,7 @@ class Navigate(View):
 
         if not os.path.exists(self.initial_path):
             self.initial_path = False
-            interface.stdscr.addstr(5, 1, f"O diretório base {self.initial_path} está inacessível ou não existe.")
+            interface.stdscr.addstr(self.screen_adjustment, 1, f"O diretório base {self.initial_path} está inacessível ou não existe.")
 
     def reset_configs(self):
         self.initial_path = False
@@ -103,6 +115,13 @@ class Navigate(View):
         interface.stdscr.clear()
         interface.current_view = self.create_view
 
+    def cryptography(self, interface, mode: CryptographyMode):
+        self.cryptography_view.update_mode(mode)
+        self.cryptography_view.set_path(f"{self.current_path}/{self.options[self.selected_option]}")
+
+        interface.stdscr.clear()
+        interface.current_view = self.cryptography_view
+
     def choose_option(self, interface):
         if (self.selected_option in range(len(self.options))):
             if self.selected_option == self.options_length - 1:
@@ -124,24 +143,27 @@ class Navigate(View):
 
         if self.selected_option < self.viewport_position:
             self.viewport_position = self.selected_option
-            interface.stdscr.clear()
-        elif self.selected_option >= self.viewport_position + height - 5:
-            self.viewport_position = self.selected_option - height + 6
-            interface.stdscr.clear()
+        elif self.selected_option >= self.viewport_position + height - self.screen_adjustment:
+            self.viewport_position = self.selected_option - height + self.screen_adjustment + 1
 
         if self.viewport_position < 0:
             self.viewport_position = 0
-            interface.stdscr.clear()
-        elif self.viewport_position > self.options_length - height + 5:
-            self.viewport_position = max(0, self.options_length - height + 5)
-            interface.stdscr.clear()
+        elif self.viewport_position > self.options_length - height + self.screen_adjustment:
+            self.viewport_position = max(0, self.options_length - height + self.screen_adjustment)
+
+        interface.stdscr.clear()
+
+    def check_selected_option_type(self, interface):
+        if (self.selected_option == self.options_length - 1):
+            self.selected_option_type = OptionType.OTHER
+        elif (self.options[self.selected_option].endswith('.enc')):
+            self.selected_option_type = OptionType.ENC_FILE
+        elif (self.options[self.selected_option].endswith('/')):
+            self.selected_option_type = OptionType.OTHER
+        else:
+            self.selected_option_type = OptionType.DEC_FILE
 
     def render(self, interface):
-        interface.stdscr.addstr(0, 1, f'{self.name}')
-        interface.stdscr.addstr(1, 1, 'Pressione (Q) para sair da navegação.')
-        interface.stdscr.addstr(2, 1, 'Pressione (D) para criar um diretório no caminho atual.')
-        interface.stdscr.addstr(3, 1, 'Pressione (F) para criar um arquivo no caminho atual.')
-
         if not self.initial_path:
             self.initialize_configs(interface)
 
@@ -149,18 +171,31 @@ class Navigate(View):
             if not self.current_path:
                 self.update_path(self.initial_path)
 
+        self.check_selected_option_type(interface)
+        interface.stdscr.addstr(0, 1, f'{self.name}')
+        interface.stdscr.addstr(1, 1, 'Q - Sair.')
+        interface.stdscr.addstr(2, 1, 'D - Criar um diretório   | F - Criar um arquivo.')
+
+        if (self.selected_option_type == OptionType.DEC_FILE or self.selected_option_type == OptionType.ENC_FILE):
+            crypt_type = 'criptografar' if self.selected_option_type == OptionType.DEC_FILE else 'descriptografar'
+            interface.stdscr.addstr(3, 1, f'C - Criptografar.        | X - Descriptografar')
+            self.screen_adjustment = 5
+        else: 
+            self.screen_adjustment = 4
+
+        if self.initial_path:
             interface.stdscr.addstr(0, 9, f': {self.current_path}')
 
             height, width = interface.stdscr.getmaxyx()
-            visible_options = self.options[self.viewport_position:self.viewport_position+height-5]
+            visible_options = self.options[self.viewport_position:self.viewport_position+height-self.screen_adjustment]
 
             for i, option in enumerate(visible_options):
                 option_index = self.viewport_position + i + 1
 
                 if i == self.selected_option - self.viewport_position:
-                    interface.stdscr.addstr(i+5, 1, f"> {option_index}. {option}")
+                    interface.stdscr.addstr(i+self.screen_adjustment, 1, f"> {option_index}. {option}")
                 else:
-                    interface.stdscr.addstr(i+5, 1, f"  {option_index}. {option}")
+                    interface.stdscr.addstr(i+self.screen_adjustment, 1, f"  {option_index}. {option}")
 
     def handle_events(self, interface):
         key = interface.stdscr.getch()
@@ -183,6 +218,12 @@ class Navigate(View):
         elif key == curses.KEY_DOWN:
             self.selected_option = (self.selected_option + 1) % self.options_length
             self.adjust_viewport(interface)
+
+        elif key == ord('c'):
+            self.cryptography(interface, CryptographyMode.ENCRYPT)
+
+        elif key == ord('x'):
+            self.cryptography(interface, CryptographyMode.DECRYPT)
 
         elif key == ord('\n'):
             self.choose_option(interface)
