@@ -117,7 +117,7 @@ class Navigate(View):
 
     def cryptography(self, interface, mode: CryptographyMode):
         self.cryptography_view.update_mode(mode)
-        self.cryptography_view.set_path(f"{self.current_path}/{self.options[self.selected_option]}")
+        self.cryptography_view.set_path(f"{self.current_path}{self.options[self.selected_option]}")
 
         interface.stdscr.clear()
         interface.current_view = self.cryptography_view
@@ -153,7 +153,7 @@ class Navigate(View):
 
         interface.stdscr.clear()
 
-    def check_selected_option_type(self, interface):
+    def check_selected_option_type(self):
         if (self.selected_option == self.options_length - 1):
             self.selected_option_type = OptionType.OTHER
         elif (self.options[self.selected_option].endswith('.enc')):
@@ -171,13 +171,12 @@ class Navigate(View):
             if not self.current_path:
                 self.update_path(self.initial_path)
 
-        self.check_selected_option_type(interface)
+        self.check_selected_option_type()
         interface.stdscr.addstr(0, 1, f'{self.name}')
         interface.stdscr.addstr(1, 1, 'Q - Sair.')
         interface.stdscr.addstr(2, 1, 'D - Criar um diretório   | F - Criar um arquivo.')
 
         if (self.selected_option_type == OptionType.DEC_FILE or self.selected_option_type == OptionType.ENC_FILE):
-            crypt_type = 'criptografar' if self.selected_option_type == OptionType.DEC_FILE else 'descriptografar'
             interface.stdscr.addstr(3, 1, f'C - Criptografar.        | X - Descriptografar')
             self.screen_adjustment = 5
         else: 
