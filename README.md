@@ -34,6 +34,14 @@ As únicas dependências necessárias para executar o Diary-CLI são:
 
 - Python venv
 
+- Python 3 Dev
+
+Tudo isto pode ser instalado em ambientes UNIX com:
+
+```shell
+sudo apt install -y python3 python3-pip python3-venv python3-dev
+```
+
 O programa é multi-plataforma, podendo ser executado em ambientes Linux, MacOS e Windows.
 
 ## Instalação

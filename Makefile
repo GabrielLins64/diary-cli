@@ -1,7 +1,7 @@
 # Makefile for Diary-CLI
 
 PYTHON = python3
-PIP = pip
+PIP = python3 -m pip
 PYINSTALLER = pyinstaller
 INSTALL_DIR = /usr/local/bin
 EXECUTABLE = dist/main
