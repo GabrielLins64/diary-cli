@@ -40,7 +40,6 @@ class Navigate(View):
         self.selected_option = 0
         self.viewport_position = 0
         self.selected_option_type = OptionType.OTHER
-        self.screen_adjustment = 6
 
     def initialize_configs(self, interface):
         configs = load_configs()
@@ -49,7 +48,7 @@ class Navigate(View):
 
         if not os.path.exists(self.initial_path):
             self.initial_path = False
-            interface.stdscr.addstr(self.screen_adjustment, 1, f"O diretório base {self.initial_path} está inacessível ou não existe.")
+            interface.stdscr.addstr(5, 1, f"O diretório base {self.initial_path} está inacessível ou não existe.")
 
     def reset_configs(self):
         self.initial_path = False
@@ -143,13 +142,13 @@ class Navigate(View):
 
         if self.selected_option < self.viewport_position:
             self.viewport_position = self.selected_option
-        elif self.selected_option >= self.viewport_position + height - self.screen_adjustment:
-            self.viewport_position = self.selected_option - height + self.screen_adjustment + 1
+        elif self.selected_option >= self.viewport_position + height - 5:
+            self.viewport_position = self.selected_option - height + 6
 
         if self.viewport_position < 0:
             self.viewport_position = 0
-        elif self.viewport_position > self.options_length - height + self.screen_adjustment:
-            self.viewport_position = max(0, self.options_length - height + self.screen_adjustment)
+        elif self.viewport_position > self.options_length - height + 5:
+            self.viewport_position = max(0, self.options_length - height + 5)
 
         interface.stdscr.clear()
 
@@ -178,23 +177,20 @@ class Navigate(View):
 
         if (self.selected_option_type == OptionType.DEC_FILE or self.selected_option_type == OptionType.ENC_FILE):
             interface.stdscr.addstr(3, 1, f'C - Criptografar.        | X - Descriptografar')
-            self.screen_adjustment = 5
-        else: 
-            self.screen_adjustment = 4
 
         if self.initial_path:
             interface.stdscr.addstr(0, 9, f': {self.current_path}')
 
             height, width = interface.stdscr.getmaxyx()
-            visible_options = self.options[self.viewport_position:self.viewport_position+height-self.screen_adjustment]
+            visible_options = self.options[self.viewport_position:self.viewport_position+height-5]
 
             for i, option in enumerate(visible_options):
                 option_index = self.viewport_position + i + 1
 
                 if i == self.selected_option - self.viewport_position:
-                    interface.stdscr.addstr(i+self.screen_adjustment, 1, f"> {option_index}. {option}")
+                    interface.stdscr.addstr(i+5, 1, f"> {option_index}. {option}")
                 else:
-                    interface.stdscr.addstr(i+self.screen_adjustment, 1, f"  {option_index}. {option}")
+                    interface.stdscr.addstr(i+5, 1, f"  {option_index}. {option}")
 
     def handle_events(self, interface):
         key = interface.stdscr.getch()

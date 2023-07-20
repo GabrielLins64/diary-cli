@@ -38,20 +38,19 @@ class Search(View):
         self.options_length = len(self.options)
         self.selected_option = 0
         self.viewport_position = 0
-        self.screen_adjustment = 3
 
     def adjust_viewport(self, interface):
         height = interface.stdscr.getmaxyx()[0]
 
         if self.selected_option < self.viewport_position:
             self.viewport_position = self.selected_option
-        elif self.selected_option >= self.viewport_position + height - self.screen_adjustment:
-            self.viewport_position = self.selected_option - height + self.screen_adjustment + 1
+        elif self.selected_option >= self.viewport_position + height - 4:
+            self.viewport_position = self.selected_option - height + 5
 
         if self.viewport_position < 0:
             self.viewport_position = 0
-        elif self.viewport_position > self.options_length - height + self.screen_adjustment:
-            self.viewport_position = max(0, self.options_length - height + self.screen_adjustment)
+        elif self.viewport_position > self.options_length - height + 4:
+            self.viewport_position = max(0, self.options_length - height + 4)
 
         interface.stdscr.clear()
 
@@ -128,20 +127,17 @@ class Search(View):
             self.check_selected_option_type()
             if (self.selected_option_type == OptionType.DEC_FILE or self.selected_option_type == OptionType.ENC_FILE):
                 interface.stdscr.addstr(2, 1, f'C - Criptografar. | X - Descriptografar')
-                self.screen_adjustment = 4
-            else: 
-                self.screen_adjustment = 3
 
             height, width = interface.stdscr.getmaxyx()
-            visible_options = self.options[self.viewport_position:self.viewport_position + height - self.screen_adjustment]
+            visible_options = self.options[self.viewport_position:self.viewport_position + height - 4]
 
             for i, option in enumerate(visible_options):
                 option_index = self.viewport_position + i + 1
 
                 if i == self.selected_option - self.viewport_position:
-                    interface.stdscr.addstr(i + self.screen_adjustment, 1, f"> {option_index}. {option}")
+                    interface.stdscr.addstr(i + 4, 1, f"> {option_index}. {option}")
                 else:
-                    interface.stdscr.addstr(i + self.screen_adjustment, 1, f"  {option_index}. {option}")
+                    interface.stdscr.addstr(i + 4, 1, f"  {option_index}. {option}")
 
         else:
             curses.echo()
