@@ -37,7 +37,8 @@ def restore_default() -> dict:
     configs = {
         "editor": "vi",
         "syncScript": f"{DIARYCLI_PATH}/scripts/sync_github.sh",
-        "storage": f"{DIARYCLI_PATH}/data/"
+        "storage": f"{DIARYCLI_PATH}/data/",
+        "saltLocation": f"{DIARYCLI_PATH}/.salt",
     }
 
     with open(configs_path, 'w') as f:

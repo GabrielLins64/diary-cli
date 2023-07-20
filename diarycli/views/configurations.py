@@ -21,6 +21,7 @@ class Configurations(View):
         self.options = [child.name for child in self.children]
         self.options.append('Armazenamento')
         self.options.append('Editor padrão')
+        self.options.append('Arquivo de salt')
         self.options.append('Restaurar configurações padrões')
         self.options.append('Voltar')
         self.options_length = len(self.options)
@@ -67,6 +68,12 @@ class Configurations(View):
                                     "editor")
 
         if (self.selected_option == 2):
+            self.update_config_view(interface,
+                                    "Arquivo de salt",
+                                    "Arquivo com o salt usado na criptografia.",
+                                    "saltLocation")
+
+        if (self.selected_option == 3):
             self.configs = configs.restore_default()
         
         if (self.selected_option == self.options_length - 1):
