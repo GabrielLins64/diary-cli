@@ -1,6 +1,7 @@
 from diarycli.view import View
 from diarycli.views.menu import Menu
 import curses
+from sys import exit
 
 
 class Interface:
@@ -22,7 +23,7 @@ class Interface:
         the application is terminated with return code 0."""
 
         if not self.current_view.parent:
-            exit(0)
+            exit()
         else:
             self.current_view = self.current_view.parent
             self.stdscr.clear()
