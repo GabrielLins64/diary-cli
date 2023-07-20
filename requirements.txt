@@ -1,3 +1,6 @@
+altgraph==0.17.3
 autopep8==2.0.2
 pycodestyle==2.10.0
+pyinstaller==5.13.0
+pyinstaller-hooks-contrib==2023.6
 tomli==2.0.1
