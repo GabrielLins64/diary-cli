@@ -16,19 +16,26 @@ class Configurations(View):
         self.name = 'Configurações'
         self.children = []
         self.configs = {}
-        self.load_configs()
 
         self.options = [child.name for child in self.children]
         self.options.append('Armazenamento')
         self.options.append('Editor padrão')
         self.options.append('Arquivo de salt')
+        self.options.append('Mostrar senhas: -')
         self.options.append('Restaurar configurações padrões')
         self.options.append('Voltar')
         self.options_length = len(self.options)
         self.selected_option = 0
 
+        self.load_configs()
+        self.showPasswords = False
+        self.showPasswordsStr = ''
+
     def load_configs(self):
         self.configs = configs.load_configs()
+        self.showPasswords = self.configs.get('showPassword')
+        self.showPasswordsStr = 'Sim' if self.showPasswords else 'Não'
+        self.options[3] = f'Mostrar senhas: {self.showPasswordsStr}'
 
     def update_config_view(self, interface, config_name: str, config_description: str, config_code: str):
         curses.echo()
@@ -74,6 +81,12 @@ class Configurations(View):
                                     "saltLocation")
 
         if (self.selected_option == 3):
+            self.configs = configs.update_configs({'showPassword': not self.configs.get('showPassword')})
+            self.showPasswords = self.configs['showPassword']
+            self.showPasswordsStr = 'Sim' if self.showPasswords else 'Não'
+            self.options[3] = f'Mostrar senhas: {self.showPasswordsStr}'
+
+        if (self.selected_option == 4):
             self.configs = configs.restore_default()
         
         if (self.selected_option == self.options_length - 1):
@@ -99,6 +112,8 @@ class Configurations(View):
 
         elif key == ord('\n'):
             self.choose_option(interface)
+            interface.stdscr.clear()
+            interface.stdscr.refresh()
 
         elif 48 <= key <= 57:
             if int(chr(key)) in range(1, self.options_length + 1):

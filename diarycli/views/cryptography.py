@@ -24,12 +24,7 @@ class Cryptography(View):
         self.path = False
         self.leave = False
         self.salt = ''
-
-    def load_salt(self):
-        cfg = configs.load_configs()
-        if os.path.exists(cfg.get('saltLocation')):
-            with open(cfg.get('saltLocation')) as f:
-                self.salt = f.read()
+        self.configs = None
 
     def update_mode(self, new_mode: CryptographyMode):
         self.mode = new_mode
@@ -51,23 +46,48 @@ class Cryptography(View):
         cryptography.decrypt(self.path, password, self.salt)
 
     def render(self, interface):
-        curses.echo()
+        self.configs = configs.load_configs()
+        showPasswd = self.configs.get('showPassword')
 
         interface.stdscr.addstr(0, 1, f"{self.mode_name}: \"{self.path}\"")
-        interface.stdscr.addstr(1, 1, f"Insira abaixo suas senhas separadas por espaços.")
-        interface.stdscr.addstr(2, 1, f"Ou deixe em branco para cancelar.")
+        interface.stdscr.addstr(1, 1, "Insira abaixo suas senhas separadas por espaços.")
+        interface.stdscr.addstr(2, 1, "Ou deixe em branco para cancelar.")
 
-        interface.stdscr.addstr(4, 1, f"Senhas: ")
-        interface.stdscr.move(4, 9)
+        interface.stdscr.addstr(4, 1, "Senhas: ")
+        interface.stdscr.refresh()
 
-        new_value = interface.stdscr.getstr().decode('utf-8')
-        interface.stdscr.clear()
-        
-        if new_value != '':
-            if self.mode == CryptographyMode.ENCRYPT:
-                self.encrypt(new_value)
+        curses.curs_set(1)
+
+        passwords = ""
+        y, x = 4, 9
+
+        while True:
+            char = interface.stdscr.getch()
+
+            if char == ord('\n'):
+                break
+            elif char == curses.KEY_BACKSPACE or char == 127:
+                if passwords:
+                    passwords = passwords[:-1]
+                    interface.stdscr.addch(y, x + len(passwords), ' ')
+                    interface.stdscr.move(y, x + len(passwords))
+            elif char == ord(' '):
+                passwords += chr(char)
+                interface.stdscr.addch(y, x + len(passwords) - 1, ' ')
             else:
-                self.decrypt(new_value)
+                passwords += chr(char)
+                interface.stdscr.addch(y, x + len(passwords) - 1, chr(char) if showPasswd else '*')
+
+            interface.stdscr.refresh()
+
+        curses.curs_set(0)
+        interface.stdscr.clear()
+
+        if passwords:
+            if self.mode == CryptographyMode.ENCRYPT:
+                self.encrypt(passwords)
+            else:
+                self.decrypt(passwords)
 
         self.leave = True
 

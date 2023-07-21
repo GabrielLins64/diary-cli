@@ -10,6 +10,7 @@ A aplicação pode ser configurada nos seguintes aspectos:
 - Armazenamento: onde os diretórios e arquivos rastreados pelo programa são armazenados.
 - Editor padrão: o editor padrão utilizado para editar um arquivo.
 - Arquivo de salt: Onde o arquivo com o salt para as senhas será armazenado.
+- Mostrar senhas: Ao digitar suas senhas na hora da criptografia de arquivos, mostrar ou não a senha na interface.
 As configurações podem ser editadas logo no menu principal, acessando a opção \"Configurações\" e aceitam a utilização de variáveis de ambientes como, por exemplo, \"$HOME/meu/caminho/de/configuração\".
 
 [Armazenamento]

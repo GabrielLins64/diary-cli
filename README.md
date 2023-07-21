@@ -122,12 +122,14 @@ O Diary-CLI possui uma interface interativa que permite ao usuário:
 2. Navegar pelo diretório rastreado pelo programa.
 
 3. Configurar algumas opções, como:
-   
+
    - Armazenamento (onde os subdiretórios e arquivos rastreados serão armazenados).
 
    - Editor padrão (para visualizar/editar os arquivos).
 
    - Arquivo de salt (salt utilizado na criptografia).
+
+   - Mostrar senhas (Ao digitar suas senhas na hora da criptografia de arquivos, mostrar ou não a senha na interface).
 
 4. Visualizar ajuda por dentro da interface.
 
