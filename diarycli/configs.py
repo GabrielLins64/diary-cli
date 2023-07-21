@@ -16,8 +16,14 @@ def load_configs() -> dict:
     with open(configs_path) as f:
         data = json.load(f)
 
+    if (data.get('storage') and not data.get('storage').endswith('/')):
+        data['storage'] += '/'
+
     for key, val in data.items():
-        data[key] = path.expandvars(val)
+        if type(val) == str:
+            data[key] = path.expandvars(val)
+        else:
+            data[key] = val
 
     return data
 
